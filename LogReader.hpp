@@ -28,7 +28,6 @@ public:
 	std::vector<double> xs;
 	std::vector<double> ys;
 };
-
 class LogReader{
 public:
 	LogReader(std::string logName){

@@ -9,6 +9,7 @@ public:
 		y = p.y;
 		beta = p.beta;
 	}
+	Pose():x(0),y(0),beta(0){}
 	double x,y,beta;
 };
 }

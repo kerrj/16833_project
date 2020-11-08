@@ -1,6 +1,7 @@
 #ifndef LINE_HPP
 #define LINE_HPP
 #include "pose.hpp"
+#include "util.hpp"
 #include <cmath>
 namespace Project{
 class Line{
@@ -19,10 +20,15 @@ private:
 	Converts the coordinates of the line to the new frame given
 	*/
 	Line convert_coords(Pose new_frame){
-		double th_prime = th + ref_frame.beta - new_frame.beta;
+		double th_prime = wrapAng(th + ref_frame.beta - new_frame.beta);
 		double dr = (new_frame.x-ref_frame.x)*std::cos(ref_frame.beta + th) + 
 					(new_frame.y-ref_frame.y)*std::sin(ref_frame.beta + th);
 		double r_prime  = r  - dr;
+		if(r_prime<0){
+			//always make sure that the radius is positive
+			r_prime=-r_prime;
+			th_prime=wrapAng(th_prime + M_PI);
+		}
 		return Line(new_frame,r_prime,th_prime);
 	}
 };

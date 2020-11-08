@@ -3,9 +3,11 @@
 
 #include "line.hpp"
 #include "pose.hpp"
+#include "LogReader.hpp"
+#include <memory>
 #include <vector>
 namespace Project{
-	std::vector<Line> detect_lines(Scan scan, Pose p){
+	std::vector<Line> detect_lines(shared_ptr<Scan> scan, Pose p){
 }
 }
 

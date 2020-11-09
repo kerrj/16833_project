@@ -26,8 +26,8 @@ private:
 		double r_prime  = r  - dr;
 		if(r_prime<0){
 			//always make sure that the radius is positive
-			r_prime=-r_prime;
-			th_prime=wrapAng(th_prime + M_PI);
+			r_prime = -r_prime;
+			th_prime = wrapAng(th_prime + M_PI);
 		}
 		return Line(new_frame,r_prime,th_prime);
 	}

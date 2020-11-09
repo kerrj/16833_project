@@ -1,6 +1,9 @@
 #include "LogReader.hpp"
 #include <iostream>
+#include "data_association.hpp"
 #include "state.hpp"
+#include "line_detector.hpp"
+
 int main(int argc,char** argv){
 	using namespace std;
 	if(argc<2){cout<<"Please pass the name of the log file"<<endl;return 0;}
@@ -18,6 +21,8 @@ int main(int argc,char** argv){
 			//scan reading
 			shared_ptr<Scan> scan=static_pointer_cast<Scan>(r);
 			cout<<"Processing scan at time "<<scan->t<<endl;
+			vector<Project::Line> detected_lines = detect_lines(scan,state.p);
+			vector<Project::Line> new_lines = associate_data(detected_lines,state.landmarks);
 		}
 	}
 }

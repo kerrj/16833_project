@@ -4,11 +4,12 @@
 #include "hungarian.h"
 #include "Line.hpp"
 #include <vector>
+#include <utility>
 #include <set>
 
 namespace Project{
 
-std::vector<Line> associate_data(std::vector<Line> lines, std::vector<Line> landmarks){
+std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(std::vector<Line> lines, std::vector<Line> landmarks){
     // TODO: output type will change to void
     // TODO: tune these constants
     const double MATCH_THRESHOLD = 100;
@@ -46,15 +47,16 @@ std::vector<Line> associate_data(std::vector<Line> lines, std::vector<Line> land
         throw "invalid graph";
     }
     std::vector<Line> new_lines = std::vector<Line>();
+    std::vector<std::pair<int, int> > matches = std::vector<std::pair<int, int> >();
     for (int i = 0; i < num_nodes; i++) {
         if (matching[i] < landmarks.size()) {
-            // TODO: add factor to factor graph
+            matches.push_back(std::pair<int, int>(i, matching[i]));
         } else {
             new_lines.push_back(lines[i]);
         }
     }
 
-    return new_lines;
+    return std::pair<std::vector<std::pair<int, int> >, std::vector<Line> >(matches, new_lines);
 }
 }
 

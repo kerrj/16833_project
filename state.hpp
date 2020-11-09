@@ -2,7 +2,7 @@
 #define STATE_HPP
 
 #include "pose.hpp"
-#include "line.hpp"
+#include "Line.hpp"
 #include "LogReader.hpp"
 #include <memory>
 #include <cmath>

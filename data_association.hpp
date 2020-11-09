@@ -44,7 +44,7 @@ std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(
 
     std::vector<int> matching = hungarianMinimumWeightPerfectMatching(num_nodes, graph);
     if (matching.size() == 0) {
-        throw "invalid graph";
+        throw std::runtime_error("invalid graph");
     }
     std::vector<Line> new_lines = std::vector<Line>();
     std::vector<std::pair<int, int> > matches = std::vector<std::pair<int, int> >();

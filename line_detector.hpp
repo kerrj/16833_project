@@ -53,8 +53,8 @@ namespace Project{
                     for (int v = 0; v < param_space[0].size(); ++v) {
                         if (param_space[u][v] >= vote_thresh) {
                         	bool notmax=false;
-                        	for (int r = -5; r <= 5; r++) {
-		                        for (int c = -5; c <= 5; c++) {
+                        	for (int r = -10; r <= 10; r++) {
+		                        for (int c = -10; c <= 10; c++) {
 		                            int uo = u + r;
 		                            int vo = v + c;
 
@@ -78,28 +78,6 @@ namespace Project{
                 return hough_lines;
             }
 
-            // void non_max_suppress() {
-            //     for (int u = 0; u < param_space.size(); ++u) {
-            //         for (int v = 0; v < param_space[0].size(); ++v) {
-            //             for (int r = -1; r <= 1; r++) {
-            //                 for (int c = -1; c <= 1; c++) {
-            //                     int uo = u + r;
-            //                     int vo = v + c;
-
-            //                     if (uo >= 0 && uo < param_space.size()
-            //                             && vo >= 0 && vo < param_space[0].size()) {
-
-            //                         if (param_space[uo][vo] > param_space[u][v]) {
-            //                             param_space[u][v] = 0;
-            //                             break;
-            //                         }
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-
             std::vector<Line> detect_lines(std::shared_ptr<Scan> scan, Pose p) {
                 // clear param_space
                 for (auto& r: param_space) {
@@ -119,11 +97,11 @@ namespace Project{
                            continue;
                         }
                         int rho_index = (int)(rho / r_step);
+                        if(rho_index>=param_space.size())continue;
                         param_space[rho_index][th_index] += 1;
                     }
 
                 }
-                // non_max_suppress();
                 // get max votes
                 std::vector<Line> hough_lines = max_votes(p);
                 return hough_lines;

@@ -22,6 +22,7 @@ int main(int argc,char** argv){
 	Project::State state;
 
 	Project::LineDetector line_detector(th_min, th_max, r_min, r_max, vote_thresh,r_step,th_step);
+	int scan_count=0;
 	while((r=logReader.getNext())!=nullptr){//terminate when we have no more lines left
 		if(r->type=='O'){
 			//odometry reading
@@ -31,17 +32,31 @@ int main(int argc,char** argv){
 		}else if(r->type=='S'){
 			//scan reading
 			shared_ptr<Scan> scan=static_pointer_cast<Scan>(r);
-			// cout<<"Processing scan at time "<<scan->t<<endl;
+			cout<<"Processing scan at time "<<scan->t<<endl;
 			std::vector<Project::Line> detected_lines = line_detector.detect_lines(scan, state.p);
 
-			// std::cout << "Num detected lines: " << detected_lines.size() << std::endl;
+			std::cout << "Detected lines: \n";
 			for (auto& l: detected_lines) {
-				std::cout << l.r << " " << l.th << std::endl;
-				//std::cout << l.ref_frame.x << " " << l.ref_frame.y << " " << l.ref_frame.beta << std::endl;
+				std::cout<<"  ";
+				l.print(true);
+				// std::cout << l.r << " " << l.th << std::endl;
+				// std::cout << l.ref_frame.x << " " << l.ref_frame.y << " " << l.ref_frame.beta << std::endl;
+			}
+			std::cout<<"Landmarks:\n";
+			for(auto& l: state.landmarks){
+				std::cout<<"  ";
+				l.print(true);
 			}
 			std::pair<std::vector<std::pair<int, int> >, std::vector<Project::Line> > matches =
 				Project::associate_data(detected_lines, state.landmarks);
-			break;
+			std::cout<<"Found matches:\n";
+			for(int i=0;i<matches.first.size();i++){
+				std::pair<int,int> corresp=(matches.first)[i];
+				std::cout<<"  detected id -> landmark id: "<<corresp.first<<"->"<<corresp.second<<std::endl;
+			}
+			state.update_landmarks(matches.second);
+			std::cout<<"landmarks size after adding: "<<state.landmarks.size()<<std::endl<<std::endl;
+			if(scan_count++>=50)break;
 		}
 	}
 }

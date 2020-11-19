@@ -9,6 +9,10 @@ public:
 		y = p.y;
 		beta = p.beta;
 	}
+	void print(bool line=false){
+		std::cout<<"Pose("<<x<<","<<y<<","<<beta<<")";
+		if(line)std::cout<<std::endl;
+	}
 	Pose():x(0),y(0),beta(0){}
 	double x,y,beta;
 };

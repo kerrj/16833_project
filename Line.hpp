@@ -10,8 +10,14 @@ public:
 	double distance(Line other){
 		Line self_prime = convert_coords(other.ref_frame);
 		double r_dist = pow(self_prime.r - other.r,2);
-		double th_dist= pow(self_prime.th - other.th,2);
+		double th_dist= pow(wrapAng(self_prime.th - other.th),2);
 		return r_dist + th_dist;
+	}
+	void print(bool line=false){
+		std::cout<<"Line(";
+		ref_frame.print();
+		std::cout<<" r,th=("<<r<<","<<th<<")";
+		if(line)std::cout<<std::endl;
 	}
 	Pose ref_frame;
 	double r,th;

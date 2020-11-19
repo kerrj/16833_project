@@ -22,7 +22,7 @@ std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(
     for (int i = 0; i < lines.size(); i++) {
         Line new_line = lines[i];
         for (int j = 0; j < landmarks.size(); j++) {
-            Line landmark = landmarks[i];
+            Line landmark = landmarks[j];
             double d = new_line.distance(landmark);
             if (d < MATCH_THRESHOLD) {
                 graph.push_back(WeightedBipartiteEdge(i, j, int(100 * d)));
@@ -48,7 +48,7 @@ std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(
     }
     std::vector<Line> new_lines = std::vector<Line>();
     std::vector<std::pair<int, int> > matches = std::vector<std::pair<int, int> >();
-    for (int i = 0; i < num_nodes; i++) {
+    for (int i = 0; i < lines.size(); i++) {
         if (matching[i] < landmarks.size()) {
             matches.push_back(std::pair<int, int>(i, matching[i]));
         } else {

@@ -20,7 +20,6 @@ include_directories(
 add_executable(slam_project src/main.cpp src/hungarian.cpp)
 
 target_link_libraries(${PROJECT_NAME}
-    ${CUDA_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${Boost_LIBRARIES}
     ${YAML_CPP_LIBRARIES}

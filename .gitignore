@@ -1,3 +1,8 @@
 *.DS_store
+Makefile
+slam_project
+*.cmake
+CMakeCache.txt
+CMakeFiles/*
 *.out
 *.gch

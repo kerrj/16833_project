@@ -1,4 +1,5 @@
 *.DS_store
+output.txt
 Makefile
 slam_project
 *.cmake

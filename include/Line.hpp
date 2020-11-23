@@ -21,7 +21,6 @@ public:
 	}
 	Pose ref_frame;
 	double r,th;
-private:
 	/*
 	Converts the coordinates of the line to the new frame given
 	*/

@@ -9,8 +9,8 @@ double th_min = 0.0;
 double th_max = 2.0 * M_PI;
 double r_min  = 0.0;
 double r_max  = 3.0;
-double r_step = .01;
-double th_step= .005;
+double r_step = .02;
+double th_step= .01;
 int vote_thresh = 50;
 
 int main(int argc,char** argv){
@@ -20,6 +20,9 @@ int main(int argc,char** argv){
 	shared_ptr<Reading> r;
 	cout<<fixed;//this makes it print all precision of doubles
 	Project::State state;
+	//This is necessary to keep track of since the reference from of each scan
+	//is in the frame of the end of the previous scan
+	Project::Pose lastScanPose;
 
 	Project::LineDetector line_detector(th_min, th_max, r_min, r_max, vote_thresh,r_step,th_step);
 	int scan_count=0;
@@ -32,31 +35,35 @@ int main(int argc,char** argv){
 		}else if(r->type=='S'){
 			//scan reading
 			shared_ptr<Scan> scan=static_pointer_cast<Scan>(r);
-			cout<<"Processing scan at time "<<scan->t<<endl;
-			std::vector<Project::Line> detected_lines = line_detector.detect_lines(scan, state.p);
+			// cout<<"Processing scan at time "<<scan->t<<endl;
+			std::vector<Project::Line> detected_lines = line_detector.detect_lines(scan, lastScanPose);
 
-			std::cout << "Detected lines: \n";
-			for (auto& l: detected_lines) {
-				std::cout<<"  ";
-				l.print(true);
-				// std::cout << l.r << " " << l.th << std::endl;
-				// std::cout << l.ref_frame.x << " " << l.ref_frame.y << " " << l.ref_frame.beta << std::endl;
-			}
-			std::cout<<"Landmarks:\n";
-			for(auto& l: state.landmarks){
-				std::cout<<"  ";
-				l.print(true);
-			}
+			// std::cout << "Detected lines: \n";
+			// for (auto& l: detected_lines) {
+			// 	std::cout<<"  ";
+			// 	l.print(true);
+			// 	// std::cout << l.r << " " << l.th << std::endl;
+			// 	// std::cout << l.ref_frame.x << " " << l.ref_frame.y << " " << l.ref_frame.beta << std::endl;
+			// }
 			std::pair<std::vector<std::pair<int, int> >, std::vector<Project::Line> > matches =
 				Project::associate_data(detected_lines, state.landmarks);
-			std::cout<<"Found matches:\n";
-			for(int i=0;i<matches.first.size();i++){
-				std::pair<int,int> corresp=(matches.first)[i];
-				std::cout<<"  detected id -> landmark id: "<<corresp.first<<"->"<<corresp.second<<std::endl;
-			}
 			state.update_landmarks(matches.second);
-			std::cout<<"landmarks size after adding: "<<state.landmarks.size()<<std::endl<<std::endl;
-			if(scan_count++>=50)break;
+			// std::cout<<"Found matches:\n";
+			// for(int i=0;i<matches.first.size();i++){
+			// 	std::pair<int,int> corresp=(matches.first)[i];
+			// 	std::cout<<"  detected id -> landmark id: "<<corresp.first<<"->"<<corresp.second<<std::endl;
+			// }
+			lastScanPose.print();//prints the current reference frame of the scan
+			std::cout<<std::endl;
+			std::cout<<"Landmarks:"<<state.landmarks.size()<<std::endl;
+			Project::Pose origin;
+			for(auto& l: state.landmarks){
+				std::cout<<"  ";
+				Project::Line line_in_world = l.convert_coords(origin);
+				line_in_world.print(true);
+			}
+			lastScanPose=state.p;
+			if(scan_count++>=200)break;
 		}
 	}
 }

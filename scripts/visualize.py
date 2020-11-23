@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 fig = plt.figure()
 ax = plt.axes()
-logname="data/16833_log_downstairs.txt"
+logname="data/16833_log_pitt_house.txt"
 plt.axis('equal')
 def visualize_line(r,rad_theta,xrange=(-10,10),yrange=(-10,10)):
   x=np.linspace(xrange[0],xrange[1],50)

@@ -56,8 +56,10 @@ int main(int argc,char** argv){
 			lastScanPose.print();//prints the current reference frame of the scan
 			std::cout<<std::endl;
 			std::cout<<"Landmarks:"<<state.landmarks.size()<<std::endl;
+			// std::cout<<"Landmarks:"<<detected_lines.size()<<std::endl;
 			Project::Pose origin;
 			for(auto& l: state.landmarks){
+			// for(auto& l: detected_lines){
 				std::cout<<"  ";
 				Project::Line line_in_world = l.convert_coords(origin);
 				line_in_world.print(true);

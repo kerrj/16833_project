@@ -1,10 +1,10 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-
+import time
 fig = plt.figure()
 ax = plt.axes()
-logname="data/16833_log_pitt_house.txt"
+logname="data/16833_log_upstairs.txt"
 plt.axis('equal')
 def visualize_line(r,rad_theta,xrange=(-10,10),yrange=(-10,10)):
   x=np.linspace(xrange[0],xrange[1],50)
@@ -39,5 +39,6 @@ while True:
   #pts is an Nx2 matrix of (x,y) points in the robot frame
   visualize_scan(pts,pose)
   plt.draw()
-  plt.waitforbuttonpress(0)
+  plt.pause(.01)
+  # plt.waitforbuttonpress(0)
   plt.cla()

@@ -8,10 +8,10 @@
 double th_min = 0.0;
 double th_max = 2.0 * M_PI;
 double r_min  = 0.0;
-double r_max  = 3.0;
-double r_step = .02;
-double th_step= .01;
-int vote_thresh = 50;
+double r_max  = 4.0;
+double r_step = .01;
+double th_step= .02;
+int vote_thresh = 120;
 
 int main(int argc,char** argv){
 	using namespace std;
@@ -42,8 +42,6 @@ int main(int argc,char** argv){
 			// for (auto& l: detected_lines) {
 			// 	std::cout<<"  ";
 			// 	l.print(true);
-			// 	// std::cout << l.r << " " << l.th << std::endl;
-			// 	// std::cout << l.ref_frame.x << " " << l.ref_frame.y << " " << l.ref_frame.beta << std::endl;
 			// }
 			std::pair<std::vector<std::pair<int, int> >, std::vector<Project::Line> > matches =
 				Project::associate_data(detected_lines, state.landmarks);
@@ -53,8 +51,7 @@ int main(int argc,char** argv){
 			// 	std::pair<int,int> corresp=(matches.first)[i];
 			// 	std::cout<<"  detected id -> landmark id: "<<corresp.first<<"->"<<corresp.second<<std::endl;
 			// }
-			lastScanPose.print();//prints the current reference frame of the scan
-			std::cout<<std::endl;
+			lastScanPose.print(true);//prints the current reference frame of the scan
 			std::cout<<"Landmarks:"<<state.landmarks.size()<<std::endl;
 			// std::cout<<"Landmarks:"<<detected_lines.size()<<std::endl;
 			Project::Pose origin;
@@ -65,7 +62,7 @@ int main(int argc,char** argv){
 				line_in_world.print(true);
 			}
 			lastScanPose=state.p;
-			if(scan_count++>=200)break;
+			// if(scan_count++>=300)break;
 		}
 	}
 }

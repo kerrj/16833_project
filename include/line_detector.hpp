@@ -53,8 +53,8 @@ namespace Project{
                     for (int v = 0; v < param_space[0].size(); ++v) {
                         if (param_space[u][v] >= vote_thresh) {
                         	bool notmax=false;
-                        	for (int r = -10; r <= 10; r++) {
-		                        for (int c = -10; c <= 10; c++) {
+                        	for (int r = -20; r <= 20; r++) {
+		                        for (int c = -20; c <= 20; c++) {
 		                            int uo = u + r;
 		                            int vo = v + c;
 

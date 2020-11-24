@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <set>
+#include <iostream>
 
 namespace Project{
 
@@ -13,32 +14,30 @@ std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(
     // TODO: output type will change to void
     // TODO: tune these constants
     const double MATCH_THRESHOLD = .2;
-    const double MAX_DISTANCE = 1000000;
-
+    const double MAX_DISTANCE = 10000;
     int num_nodes = lines.size() > landmarks.size() ? lines.size() : landmarks.size();
 
-    // add edges from lines to landmarks iff they're close enough
+    // add edges from lines to landmarks 
+    //add all edges and threshold in the solution step for new landmarks
     std::vector<WeightedBipartiteEdge> graph = std::vector<WeightedBipartiteEdge>();
     for (int i = 0; i < lines.size(); i++) {
         Line new_line = lines[i];
         for (int j = 0; j < landmarks.size(); j++) {
             Line landmark = landmarks[j];
             double d = new_line.distance(landmark);
-            if (d < MATCH_THRESHOLD) {
-                graph.push_back(WeightedBipartiteEdge(i, j, int(1000 * d)));
-            }
+            graph.push_back(WeightedBipartiteEdge(i, j, int(10000 * d)));
         }
     }
 
     // add dummy nodes on right or left to balance number of nodes
     for (int i = lines.size(); i < num_nodes; i++) {
         for (int j = 0; j < num_nodes; j++) {
-            graph.push_back(WeightedBipartiteEdge(i, j, int(1000 * MAX_DISTANCE)));
+            graph.push_back(WeightedBipartiteEdge(i, j, int(10000 * MAX_DISTANCE)));
         }
     }
     for (int j = landmarks.size(); j < num_nodes; j++) {
         for (int i = 0; i < num_nodes; i++) {
-            graph.push_back(WeightedBipartiteEdge(i, j, int(1000 * MAX_DISTANCE)));
+            graph.push_back(WeightedBipartiteEdge(i, j, int(10000 * MAX_DISTANCE)));
         }
     }
 
@@ -51,6 +50,11 @@ std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(
     std::vector<std::pair<int, int> > matches = std::vector<std::pair<int, int> >();
     for (int i = 0; i < lines.size(); i++) {
         if (matching[i] < landmarks.size()) {
+            double distance = lines[i].distance(landmarks[matching[i]]);
+            if(distance>MATCH_THRESHOLD){
+                new_lines.push_back(lines[i]);
+                continue;
+            }
             matches.push_back(std::pair<int, int>(i, matching[i]));
         } else {
             new_lines.push_back(lines[i]);

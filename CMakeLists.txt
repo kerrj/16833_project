@@ -9,13 +9,14 @@ find_package(yaml-cpp REQUIRED)
 #find_package(Boost REQUIRED)
 #find_package(Boost COMPONENTS filesystem REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(gtsam required)
 
 include_directories(
-    include
     ${CMAKE_CURRENT_BINARY_DIR}
     ${EIGEN3_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIR}
+    ${GTSAM_INCLUDE_DIR}
 )
 
 add_executable(slam_project src/main.cpp src/hungarian.cpp)

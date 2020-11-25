@@ -3,10 +3,15 @@
 #include <cmath>
 #include "pose.hpp"
 #include "util.hpp"
+#include <gtsam/geometry/Point2.h>
+
 namespace Project {
 class Line {
  public:
   Line(Pose _p, double _r, double _th) : ref_frame(_p), r(_r), th(_th){};
+  // destructor
+  virtual ~Line() {}
+
   double distance(Line other) {
     Line self_prime = convert_coords(other.ref_frame);
     double r_dist = std::pow(self_prime.r - other.r, 2);
@@ -36,6 +41,11 @@ class Line {
     }
     return Line(new_frame, r_prime, th_prime);
   }
+
+  gtsam::Point2 toPoint2() {
+    return gtsam::Point2(this.r, this.th);
+  }
+
 };
 }  // namespace Project
 #endif

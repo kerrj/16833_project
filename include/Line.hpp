@@ -42,10 +42,15 @@ class Line {
     return Line(new_frame, r_prime, th_prime);
   }
 
-  gtsam::Point2 toPoint2() {
-    return gtsam::Point2(this.r, this.th);
+  gtsam::Point2 to_Point2() {
+    return gtsam::Point2(r, th);
   }
 
 };
+
+Project::Line Point2_to_Line(gtsam::Point2 line, Pose ref_pose) {
+  return Project::Line(ref_pose, line.x(), line.y());
+}
+
 }  // namespace Project
 #endif

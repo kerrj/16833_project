@@ -1,8 +1,9 @@
 #include <iostream>
-#include "LogReader.hpp"
 #include "data_association.hpp"
+#include "LogReader.hpp"
 #include "line_detector.hpp"
 #include "state.hpp"
+#include "solver.hpp"
 
 double th_min = 0.0;
 double th_max = 2.0 * M_PI;
@@ -10,7 +11,7 @@ double r_min = 0.0;
 double r_max = 4.0;
 double r_step = .01;
 double th_step = .02;
-int vote_thresh = 120;
+int vote_thresh = 60; //120;
 
 int main(int argc, char** argv) {
   using namespace std;
@@ -48,7 +49,7 @@ int main(int argc, char** argv) {
       // 	std::cout<<"  ";
       // 	l.print(true);
       // }
-      std::pair<std::vector<std::pair<int, int> >, std::vector<Project::Line> >
+      std::pair<std::vector<std::pair<Project::Line, int> >, std::vector<Project::Line> >
           matches = Project::associate_data(detected_lines, state.landmarks);
       state.update_landmarks(matches.second);
       // std::cout<<"Found matches:\n";
@@ -69,7 +70,7 @@ int main(int argc, char** argv) {
         line_in_world.print(true);
       }
       lastScanPose = state.p;
-      // if(scan_count++>=300)break;
+      if(scan_count++>=300)break;
     }
   }
 }

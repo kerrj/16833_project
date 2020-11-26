@@ -1,5 +1,8 @@
 #ifndef POSE_HPP
 #define POSE_HPP
+
+#include <gtsam/geometry/Pose2.h>
+
 namespace Project {
 class Pose {
  public:
@@ -19,10 +22,15 @@ class Pose {
   Pose() : x(0), y(0), beta(0) {}
   double x, y, beta;
 
-  gtsam::Point2 toPose2() {
-    return gtsam::Pose2(this.x, this.y, this.beta);
+  gtsam::Pose2 to_Pose2() {
+    return gtsam::Pose2(x, y, beta);
   }
 
 };
+
+Project::Pose Pose2_to_Pose(gtsam::Pose2 p) {
+  return Project::Pose(p.x(), p.y(), p.theta());
+}
+
 }  // namespace Project
 #endif

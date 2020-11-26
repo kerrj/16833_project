@@ -26,7 +26,7 @@ def visualize_scan(pts, frame):
     )
     T = frame[0:2, :]
     transpts = R.dot(pts.T) + T
-    ax.plot(transpts[0, :], transpts[1, :], ".")
+    ax.plot(transpts[0, :], transpts[1, :], ".", markersize=0.5)
 
 
 logf = open(logname)

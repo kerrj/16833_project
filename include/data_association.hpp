@@ -10,7 +10,7 @@
 
 namespace Project {
 
-std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(
+std::pair<std::vector<std::pair<Line, int> >, std::vector<Line> > associate_data(
     std::vector<Line> lines, std::vector<Line> landmarks) {
   // TODO: output type will change to void
   // TODO: tune these constants
@@ -47,13 +47,13 @@ std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(
   std::vector<int> matching =
       hungarianMinimumWeightPerfectMatching(num_nodes, graph);
   if (matching.size() == 0) {
-    std::vector<std::pair<int, int> > ps;
-    return std::pair<std::vector<std::pair<int, int> >, std::vector<Line> >(
+    std::vector<std::pair<Line, int> > ps;
+    return std::pair<std::vector<std::pair<Line, int> >, std::vector<Line> >(
         ps, lines);
   }
   std::vector<Line> new_lines = std::vector<Line>();
-  std::vector<std::pair<int, int> > matches =
-      std::vector<std::pair<int, int> >();
+  std::vector<std::pair<Line, int> > matches =
+      std::vector<std::pair<Line, int> >();
   for (int i = 0; i < lines.size(); i++) {
     if (matching[i] < landmarks.size()) {
       double distance = lines[i].distance(landmarks[matching[i]]);
@@ -61,13 +61,13 @@ std::pair<std::vector<std::pair<int, int> >, std::vector<Line> > associate_data(
         new_lines.push_back(lines[i]);
         continue;
       }
-      matches.push_back(std::pair<int, int>(i, matching[i]));
+      matches.push_back(std::pair<Line, int>(lines[i], matching[i]));
     } else {
       new_lines.push_back(lines[i]);
     }
   }
 
-  return std::pair<std::vector<std::pair<int, int> >, std::vector<Line> >(
+  return std::pair<std::vector<std::pair<Line, int> >, std::vector<Line> >(
       matches, new_lines);
 }
 }  // namespace Project

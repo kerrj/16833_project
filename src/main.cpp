@@ -12,6 +12,7 @@ double r_max = 4.0;
 double r_step = .01;
 double th_step = .02;
 int vote_thresh = 60; //120;
+bool print_lines = false;
 
 int main(int argc, char** argv) {
   using namespace std;
@@ -29,6 +30,9 @@ int main(int argc, char** argv) {
 
   Project::LineDetector line_detector(th_min, th_max, r_min, r_max, vote_thresh,
                                       r_step, th_step);
+
+  Project::Solver solver;
+
   int scan_count = 0;
   while ((r = logReader.getNext()) !=
          nullptr) {  // terminate when we have no more lines left
@@ -51,7 +55,12 @@ int main(int argc, char** argv) {
       // }
       std::pair<std::vector<std::pair<Project::Line, int> >, std::vector<Project::Line> >
           matches = Project::associate_data(detected_lines, state.landmarks);
-      state.update_landmarks(matches.second);
+
+      solver.update(matches.first, matches.second);
+      std::vector<Project::Line> updated_landmarks = solver.get_landmark_values();
+
+      //state.update_landmarks(matches.second);
+      state.update_landmarks(updated_landmarks);
       // std::cout<<"Found matches:\n";
       // for(int i=0;i<matches.first.size();i++){
       // 	std::pair<int,int> corresp=(matches.first)[i];
@@ -61,7 +70,7 @@ int main(int argc, char** argv) {
       lastScanPose.print(
           true);  // prints the current reference frame of the scan
       std::cout << "Landmarks:" << state.landmarks.size() << std::endl;
-      // std::cout<<"Landmarks:"<<detected_lines.size()<<std::endl;
+       //std::cout<<"Landmarks:"<<detected_lines.size()<<std::endl;
       Project::Pose origin;
       for (auto& l : state.landmarks) {
         // for(auto& l: detected_lines){

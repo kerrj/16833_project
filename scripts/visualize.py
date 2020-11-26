@@ -5,11 +5,11 @@ import time
 
 fig = plt.figure()
 ax = plt.axes()
-logname = "data/16833_log_upstairs.txt"
+logname = "../data/16833_log_downstairs.txt"
 plt.axis("equal")
 
 
-def visualize_line(r, rad_theta, xrange=(-10, 10), yrange=(-10, 10)):
+def visualize_line(r, rad_theta, xrange=(-1, 1), yrange=(-1, 1)):
     x = np.linspace(xrange[0], xrange[1], 50)
     m = -np.cos(rad_theta) / np.sin(rad_theta)
     b = r / np.sin(rad_theta)

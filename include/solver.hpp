@@ -22,7 +22,7 @@ class Solver {
   gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(50);
 
   gtsam::SharedNoiseModel odometry_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(0.2, 0.2, 0.1)); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(0.05, 0.05, 0.1)); // TODO: change covariances
   gtsam::SharedNoiseModel measurement_noise =
     gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(Line::R_VAR, Line::TH_VAR)); // TODO: change covariances
 
@@ -57,20 +57,20 @@ class Solver {
     values.insert(next_pose_key, new_pose);
 
     // add factor between new and previous pose
-    gtsam::Pose2 odometry(new_pose.x() - prev_pose.x(), new_pose.y() - prev_pose.y(), new_pose.theta() - prev_pose.theta());
+    gtsam::Pose2 odometry(new_pose.x() - prev_pose.x(), new_pose.y() - prev_pose.y(), wrapAng(new_pose.theta() - prev_pose.theta()));
     graph.add(gtsam::BetweenFactor<gtsam::Pose2>(prev_pose_key, next_pose_key, odometry, odometry_noise));
 
     // update prev_pose for the next valid call to update_graph
     prev_pose = new_pose;
 
     // add factor for all matched lines
-    for (auto match : matches) {
-      Line line = match.first;
-      gtsam::Key landmark_key = gtsam::symbol('L', match.second);
-      gtsam::Key ref_pose_key = gtsam::symbol('P', landmark_to_ref_pose[match.second]);
+    // for (auto match : matches) {
+    //   Line line = match.first;
+    //   gtsam::Key landmark_key = gtsam::symbol('L', match.second);
+    //   gtsam::Key ref_pose_key = gtsam::symbol('P', landmark_to_ref_pose[match.second]);
 
-      graph.add(LineFactor(ref_pose_key, next_pose_key, landmark_key, line.r, line.th, measurement_noise));
-    }
+    //   graph.add(LineFactor(ref_pose_key, next_pose_key, landmark_key, line.r, line.th, measurement_noise));
+    // }
 
     // add variables and factors for all newly observed lines
     //std::cout << "narnina loop" << std::endl;
@@ -82,8 +82,10 @@ class Solver {
       //values.insert(new_line_key, new_line);
       if (!isam.estimate().exists(gtsam::symbol('L', num_landmarks - 1))) {
         values.insert(new_line_key, new_line);
+        graph.add(gtsam::PriorFactor<gtsam::Point2>(new_line_key,new_line,measurement_noise));
       }
-      graph.add(LineFactor(next_pose_key, next_pose_key, new_line_key, new_line_narnia.r, new_line_narnia.th, measurement_noise));
+      // LineFactor factor(next_pose_key, next_pose_key, new_line_key, new_line_narnia.r, new_line_narnia.th, measurement_noise);
+      // graph.add(factor);
     }
 
     isam.update(graph, values);
@@ -109,6 +111,12 @@ class Solver {
     }
 
     return updated_landmarks;
+  }
+  Project::Pose get_last_pose() {
+    gtsam::Values estimate_values = isam.estimate();
+    gtsam::Key pose_key = gtsam::symbol('P',num_poses-1);
+    gtsam::Pose2 p = estimate_values.at<gtsam::Pose2>(pose_key);
+    return Pose2_to_Pose(p);
   }
 };
 } // namespace Project

@@ -7,6 +7,7 @@
 #include <gtsam/linear/NoiseModel.h>
 #include <gtsam/base/numericalDerivative.h>
 #include <iostream>
+#include <gtsam/base/Matrix.h>
 
 // using namespace Project;
 namespace Project {
@@ -33,7 +34,6 @@ class LineFactor: public gtsam::NoiseModelFactor3<gtsam::Pose2, gtsam::Pose2, gt
       Pose new_pose_narnia = Pose2_to_Pose(new_pose);
       Line landmark_narnia = Point2_to_Line(landmark, ref_pose_narnia);
       Line new_landmark_narnia = landmark_narnia.convert_coords(new_pose_narnia);
-
       return gtsam::Vector2(rho_ - new_landmark_narnia.r, wrapAng(theta_ - new_landmark_narnia.th));
     }
 
@@ -46,7 +46,18 @@ class LineFactor: public gtsam::NoiseModelFactor3<gtsam::Pose2, gtsam::Pose2, gt
       if(H1) (*H1) = gtsam::numericalDerivative11<gtsam::Vector,gtsam::Pose2>(boost::bind(&LineFactor::lineError, this, _1, pose2, line), pose1);
       if(H2) (*H2) = gtsam::numericalDerivative11<gtsam::Vector,gtsam::Pose2>(boost::bind(&LineFactor::lineError, this, pose1, _1, line), pose2);
       if(H3) (*H3) = gtsam::numericalDerivative11<gtsam::Vector,gtsam::Point2>(boost::bind(&LineFactor::lineError, this, pose1, pose2, _1), line);
-
+      // if(H1){
+      //   gtsam::Matrix& m=*H1;
+      //   gtsam::print(m,"H1:",std::cout);
+      // }
+      // if(H2){
+      //   gtsam::Matrix& m=*H2;
+      //   gtsam::print(m,"H2:",std::cout);
+      // }
+      // if(H3){
+      //   gtsam::Matrix& m=*H3;
+      //   gtsam::print(m,"H3:",std::cout);
+      // }
       return lineError(pose1, pose2, line);
     }
 

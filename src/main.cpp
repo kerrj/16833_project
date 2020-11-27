@@ -30,9 +30,7 @@ int main(int argc, char** argv) {
   LogReader logReader(argv[1]);
   shared_ptr<Reading> r;
   Project::State state;
-  // This is necessary to keep track of since the reference from of each scan
-  // is in the frame of the end of the previous scan
-  Project::Pose last_scan_pose;
+
   Project::Pose origin;
 
   Project::LineDetector line_detector(th_min, th_max, r_min, r_max, vote_thresh,
@@ -48,7 +46,11 @@ int main(int argc, char** argv) {
       shared_ptr<Odometry> odom = static_pointer_cast<Odometry>(r);
       // cout<<"Processing odom at time " << odom->t << endl;
 
-      state.update_pose(odom);
+      state.add_odom(odom);//THIS IS CHANGED
+      //it now keeps a queue of odom, and only integrates it when
+      //integrate_odom is called. This is to deal with the fact that
+      //the scan pose is the pose of the end of the last scan. It's
+      //a cleaner way than keeping a last_scan_pose variable around
 
     } else if (r->type == 'S') {
       // scan reading
@@ -57,7 +59,7 @@ int main(int argc, char** argv) {
 
       // detect lines
       vector<Project::Line> detected_lines =
-        line_detector.detect_lines(scan, last_scan_pose);
+        line_detector.detect_lines(scan, state.pose);
 
       // match lines with landmarks
       pair<vector<pair<Project::Line, int> >, vector<Project::Line> >
@@ -66,11 +68,13 @@ int main(int argc, char** argv) {
       // optimize with new lines
       solver.update(matches.first, matches.second);
       vector<Project::Line> updated_landmarks = solver.get_landmark_values();
-
+      //update the landmark estimates
       state.set_landmarks(updated_landmarks);
+      // update the scan pose estimate
+      state.pose = solver.get_last_pose();
 
       // prints the current reference frame of the scan
-      vis_log << last_scan_pose << endl;
+      vis_log << state.pose << endl;
 
       // print all landmarks
       vis_log << "Landmarks:" << state.landmarks.size() << endl;
@@ -86,7 +90,9 @@ int main(int argc, char** argv) {
         vis_log << "  " << line_in_world << endl;
       }
 
-      last_scan_pose = state.pose;
+      //integrate the remaining odom to take us to the next scan frame
+      //see explanation inside the odom branch above
+      state.integrate_odom();
       if (scan_count++ >= 300) break;
     }
   }

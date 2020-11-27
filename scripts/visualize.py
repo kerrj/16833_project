@@ -9,12 +9,12 @@ logname = "../data/16833_log_downstairs.txt"
 plt.axis("equal")
 
 
-def visualize_line(r, rad_theta, xrange=(-1, 1), yrange=(-1, 1)):
+def visualize_line(r, rad_theta, xrange=(-15, 15), yrange=(-15, 15), **kwargs):
     x = np.linspace(xrange[0], xrange[1], 50)
     m = -np.cos(rad_theta) / np.sin(rad_theta)
     b = r / np.sin(rad_theta)
     y = m * x + b
-    ax.plot(x[(y < yrange[1]) & (y > yrange[0])], y[(y < yrange[1]) & (y > yrange[0])])
+    ax.plot(x[(y < yrange[1]) & (y > yrange[0])], y[(y < yrange[1]) & (y > yrange[0])], **kwargs)
 
 
 def visualize_scan(pts, frame):
@@ -26,35 +26,56 @@ def visualize_scan(pts, frame):
     )
     T = frame[0:2, :]
     transpts = R.dot(pts.T) + T
-    ax.plot(transpts[0, :], transpts[1, :], ".", markersize=0.5)
+    ax.plot(transpts[0, :], transpts[1, :], ".", markersize=0.75)
 
 
 logf = open(logname)
 resf = open("output.txt")
+iteration = 0
 while True:
+    iteration += 1
+    print(f"_____ITERATION_({iteration})_____")
     pose = resf.readline()[5:-2]
     pose = np.array([[float(s)] for s in pose.split(",")])
+
+    # plot landmarks
     nlandmarks = resf.readline()
     nlandmarks = int(nlandmarks[nlandmarks.find(":") + 1 :])
     for i in range(nlandmarks):
         line = resf.readline()
         line = line[line.find("r,th=(") + 6 : -2]
         line = [float(s) for s in line.split(",")]  # r,th
-        visualize_line(line[0], line[1])
+        visualize_line(line[0], line[1], linewidth=2)
+    print("# landmarks:", nlandmarks)
+
+    # plot detected lines
+    nlines = resf.readline()
+    nlines = int(nlines[nlines.find(":") + 1 :])
+    for i in range(nlines):
+        line = resf.readline()
+        line = line[line.find("r,th=(") + 6 : -2]
+        line = [float(s) for s in line.split(",")]  # r,th
+        visualize_line(line[0], line[1], linewidth=0.5)
+    print("# detected lines:", nlines)
+
+    # plot scan
     while True:
         logline = logf.readline().strip().split(" ")
         if logline[1] == "S":
             break
     logline = logline[3:]
+    # pts is an Nx2 matrix of (x,y) points in the robot frame
     pts = np.array(
         [
             [float(logline[2 * i]), float(logline[2 * i + 1])]
             for i in range(len(logline) // 2)
         ]
     )
-    # pts is an Nx2 matrix of (x,y) points in the robot frame
     visualize_scan(pts, pose)
+
     plt.draw()
-    plt.pause(0.01)
+    if iteration == 280:
+        input()
+    plt.pause(0.05)
     # plt.waitforbuttonpress(0)
     plt.cla()

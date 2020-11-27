@@ -34,7 +34,7 @@ class LineFactor: public gtsam::NoiseModelFactor3<gtsam::Pose2, gtsam::Pose2, gt
       Line landmark_narnia = Point2_to_Line(landmark, ref_pose_narnia);
       Line new_landmark_narnia = landmark_narnia.convert_coords(new_pose_narnia);
 
-      return gtsam::Vector2(rho_ - new_landmark_narnia.r, theta_ - new_landmark_narnia.th);
+      return gtsam::Vector2(rho_ - new_landmark_narnia.r, wrapAng(theta_ - new_landmark_narnia.th));
     }
 
     // evaluate error

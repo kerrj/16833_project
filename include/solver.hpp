@@ -19,12 +19,12 @@ namespace Project {
 class Solver {
   gtsam::NonlinearFactorGraph graph;
   gtsam::Values values;
-  gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(25);
+  gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(50);
 
   gtsam::SharedNoiseModel odometry_noise =
     gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(0.2, 0.2, 0.1)); // TODO: change covariances
   gtsam::SharedNoiseModel measurement_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(0.2, 0.2)); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(Line::R_VAR, Line::TH_VAR)); // TODO: change covariances
 
   int num_poses = 0;
   int num_landmarks = 0;
@@ -69,17 +69,13 @@ class Solver {
       gtsam::Key landmark_key = gtsam::symbol('L', match.second);
       gtsam::Key ref_pose_key = gtsam::symbol('P', landmark_to_ref_pose[match.second]);
 
-      // temporary fix
-      if (!isam.estimate().exists(gtsam::symbol('L', match.second))) {
-          values.insert(landmark_key, match.first.to_Point2());
-      }
-
       graph.add(LineFactor(ref_pose_key, next_pose_key, landmark_key, line.r, line.th, measurement_noise));
     }
 
     // add variables and factors for all newly observed lines
     //std::cout << "narnina loop" << std::endl;
     for (auto new_line_narnia : new_lines) {
+      landmark_to_ref_pose[num_landmarks] = num_poses - 1;
       gtsam::Key new_line_key = gtsam::symbol('L', num_landmarks++);
       gtsam::Point2 new_line = new_line_narnia.to_Point2();
 
@@ -88,42 +84,30 @@ class Solver {
         values.insert(new_line_key, new_line);
       }
       graph.add(LineFactor(next_pose_key, next_pose_key, new_line_key, new_line_narnia.r, new_line_narnia.th, measurement_noise));
-      landmark_to_ref_pose[num_landmarks] = num_poses;
     }
 
     isam.update(graph, values);
+    graph.resize(0);
+    values.clear();
   }
 
   std::vector<Line> get_landmark_values() {
-    //std::cout << "get landmark valuse" << std::endl;
     std::vector<Line> updated_landmarks;
 
     gtsam::Values estimate_values = isam.estimate();
 
-    for (auto k: values.keys()) {
-      //k.print();
-      //std::cout << k << std::endl;
+    for (auto k: estimate_values.keys()) {
       // if landmark value
       if (gtsam::symbolChr(k) == 'L') {
-        //std::cout << gtsam::symbolChr(k) << "\n";
         int opt_land_idx = gtsam::symbolIndex(k);
-        gtsam::Point2 opt_land = values.at<gtsam::Point2>(k);
+        gtsam::Point2 opt_land = estimate_values.at<gtsam::Point2>(k);;
         gtsam::Key opt_pose_key = gtsam::symbol('P', landmark_to_ref_pose[opt_land_idx]);
-        if (estimate_values.exists(opt_pose_key)) {
-          gtsam::Pose2 opt_pose = estimate_values.at<gtsam::Pose2>(opt_pose_key);
-          updated_landmarks.push_back(Point2_to_Line(opt_land, Pose2_to_Pose(opt_pose)));
-        }
+        assert (estimate_values.exists(opt_pose_key));
+        gtsam::Pose2 opt_pose = estimate_values.at<gtsam::Pose2>(opt_pose_key);
+        updated_landmarks.push_back(Point2_to_Line(opt_land, Pose2_to_Pose(opt_pose)));
       }
     }
 
-    //if (updated_landmarks.size() == 0) {
-      //std::cout << "oh no its zero :( size" << std::endl;
-    //} else {
-      //std::cout << "its not zero ! " << std::endl;
-    //}
-
-    graph.resize(0);
-    values.clear();
     return updated_landmarks;
   }
 };

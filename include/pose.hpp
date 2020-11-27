@@ -15,10 +15,6 @@ class Pose {
     y = p.y;
     beta = p.beta;
   }
-  void print(bool line = false) {
-    std::cout << "Pose(" << x << "," << y << "," << beta << ")";
-    if (line) std::cout << std::endl;
-  }
   Pose() : x(0), y(0), beta(0) {}
   double x, y, beta;
 
@@ -32,5 +28,10 @@ Project::Pose Pose2_to_Pose(gtsam::Pose2 p) {
   return Project::Pose(p.x(), p.y(), p.theta());
 }
 
+std::ostream& operator << (std::ostream& outs, const Pose& p) {
+  return outs << "Pose(" << p.x << "," << p.y << "," << p.beta << ")";
+}
+
 }  // namespace Project
+
 #endif

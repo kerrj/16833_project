@@ -7,9 +7,13 @@
 
 namespace Project {
 class Line {
- public:
+public:
+  Pose ref_frame;
+  double r, th;
+  constexpr static const double R_VAR = 0.2, TH_VAR = 0.1;
+
   Line(Pose _p, double _r, double _th) : ref_frame(_p), r(_r), th(_th){};
-  // destructor
+
   virtual ~Line() {}
 
   double distance(Line other) {
@@ -18,14 +22,7 @@ class Line {
     double th_dist = std::pow(wrapAng(self_prime.th - other.th), 2);
     return std::sqrt(r_dist + th_dist);
   }
-  void print(bool line = false) {
-    std::cout << "Line(";
-    ref_frame.print();
-    std::cout << " r,th=(" << r << "," << th << ")";
-    if (line) std::cout << std::endl;
-  }
-  Pose ref_frame;
-  double r, th;
+
   /*
   Converts the coordinates of the line to the new frame given
   */
@@ -52,5 +49,10 @@ Project::Line Point2_to_Line(gtsam::Point2 line, Pose ref_pose) {
   return Project::Line(ref_pose, line.x(), line.y());
 }
 
+std::ostream& operator << (std::ostream& outs, const Line& l) {
+  return outs << "Line(" << l.ref_frame << " r,th=(" << l.r << "," << l.th << ")";
+}
+
 }  // namespace Project
+
 #endif

@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
         matches = Project::associate_data(detected_lines, state.landmarks);
 
       // optimize with new lines
-      solver.update(matches.first, matches.second);
+      solver.update(state.pose, matches.first, matches.second);
       vector<Project::Line> updated_landmarks = solver.get_landmark_values();
       //update the landmark estimates
       state.set_landmarks(updated_landmarks);

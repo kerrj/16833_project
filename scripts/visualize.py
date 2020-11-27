@@ -26,7 +26,7 @@ def visualize_scan(pts, frame):
     )
     T = frame[0:2, :]
     transpts = R.dot(pts.T) + T
-    ax.plot(transpts[0, :], transpts[1, :], ".", markersize=0.75)
+    ax.plot(transpts[0, :], transpts[1, :], ".", color='k', markersize=0.75)
 
 
 logf = open(logname)
@@ -35,8 +35,11 @@ iteration = 0
 while True:
     iteration += 1
     print(f"_____ITERATION_({iteration})_____")
+
+    # plot pose
     pose = resf.readline()[5:-2]
     pose = np.array([[float(s)] for s in pose.split(",")])
+    plt.arrow(pose[0, 0], pose[1, 0], 0.4*math.cos(pose[2, 0]), 0.4*math.sin(pose[2, 0]), width=0.05, ec='r')
 
     # plot landmarks
     nlandmarks = resf.readline()
@@ -45,7 +48,7 @@ while True:
         line = resf.readline()
         line = line[line.find("r,th=(") + 6 : -2]
         line = [float(s) for s in line.split(",")]  # r,th
-        visualize_line(line[0], line[1], linewidth=2)
+        visualize_line(line[0], line[1], linewidth=1)
     print("# landmarks:", nlandmarks)
 
     # plot detected lines
@@ -55,7 +58,7 @@ while True:
         line = resf.readline()
         line = line[line.find("r,th=(") + 6 : -2]
         line = [float(s) for s in line.split(",")]  # r,th
-        visualize_line(line[0], line[1], linewidth=0.5)
+        visualize_line(line[0], line[1], linewidth=1, alpha=0.4)
     print("# detected lines:", nlines)
 
     # plot scan
@@ -74,8 +77,10 @@ while True:
     visualize_scan(pts, pose)
 
     plt.draw()
+    ax.set_xlim((-10, 10))
+    ax.set_ylim((-10, 10))
     if iteration == 280:
         input()
     plt.pause(0.05)
-    # plt.waitforbuttonpress(0)
+    # if plt.waitforbuttonpress(0): exit()
     plt.cla()

@@ -9,6 +9,7 @@
 #include <gtsam/inference/Symbol.h>
 #include <gtsam/slam/BetweenFactor.h>
 #include <gtsam/slam/PriorFactor.h>
+#include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
 #include <gtsam/linear/NoiseModel.h>
 
 #include "LineFactor.hpp"
@@ -19,10 +20,10 @@ namespace Project {
 class Solver {
   gtsam::NonlinearFactorGraph graph;
   gtsam::Values values;
-  gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(50);
+  gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(70);
 
   gtsam::SharedNoiseModel odometry_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(0.05, 0.05, 0.1)); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(0.02, 0.02, 0.1)); // TODO: change covariances
   gtsam::SharedNoiseModel measurement_noise =
     gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(Line::R_VAR, Line::TH_VAR)); // TODO: change covariances
 
@@ -51,47 +52,47 @@ class Solver {
 
     // add new_pose variable
     gtsam::Key prev_pose_key = gtsam::symbol('P', num_poses-1);
-    if (num_poses > 2) prev_pose = isam.estimate().at<gtsam::Pose2>(prev_pose_key); // TODO: use this for prev_pose? could also pass in odometry directly
     gtsam::Key next_pose_key = gtsam::symbol('P', num_poses++);
     values.insert(next_pose_key, new_pose);
 
     // add factor between new and previous pose
-    gtsam::Pose2 odometry(new_pose.x() - prev_pose.x(), new_pose.y() - prev_pose.y(), wrapAng(new_pose.theta() - prev_pose.theta()));
+    gtsam::Point2 rel_translation = prev_pose.transformTo(gtsam::Point2(new_pose.x(),new_pose.y()));
+    gtsam::Pose2 odometry(rel_translation.x(), rel_translation.y(), wrapAng(new_pose.theta() - prev_pose.theta()));
     graph.add(gtsam::BetweenFactor<gtsam::Pose2>(prev_pose_key, next_pose_key, odometry, odometry_noise));
 
     // update prev_pose for the next valid call to update_graph
     prev_pose = new_pose;
 
     // add factor for all matched lines
-    // for (auto match : matches) {
-    //   Line line = match.first;
-    //   gtsam::Key landmark_key = gtsam::symbol('L', match.second);
-    //   gtsam::Key ref_pose_key = gtsam::symbol('P', landmark_to_ref_pose[match.second]);
+    for (auto match : matches) {
+      Line line = match.first;
+      gtsam::Key landmark_key = gtsam::symbol('L', match.second);
+      gtsam::Key ref_pose_key = gtsam::symbol('P', landmark_to_ref_pose[match.second]);
 
-    //   graph.add(LineFactor(ref_pose_key, next_pose_key, landmark_key, line.r, line.th, measurement_noise));
-    // }
+      graph.add(LineFactor(ref_pose_key, next_pose_key, landmark_key, line.r, line.th, measurement_noise));
+    }
 
-    // // add variables and factors for all newly observed lines
-    // //std::cout << "narnina loop" << std::endl;
-    // for (auto new_line_narnia : new_lines) {
-    //   landmark_to_ref_pose[num_landmarks] = num_poses - 1;
-    //   gtsam::Key new_line_key = gtsam::symbol('L', num_landmarks++);
-    //   gtsam::Point2 new_line = new_line_narnia.to_Point2();
+    // add variables and factors for all newly observed lines
+    //std::cout << "narnina loop" << std::endl;
+    for (auto new_line_narnia : new_lines) {
+      landmark_to_ref_pose[num_landmarks] = num_poses - 1;
+      gtsam::Key new_line_key = gtsam::symbol('L', num_landmarks++);
+      gtsam::Point2 new_line = new_line_narnia.to_Point2();
 
-    //   values.insert(new_line_key, new_line);
-    //   graph.add(gtsam::PriorFactor<gtsam::Point2>(new_line_key,new_line,measurement_noise));
-    //   // LineFactor factor(next_pose_key, next_pose_key, new_line_key, new_line_narnia.r, new_line_narnia.th, measurement_noise);
-    //   // graph.add(factor);
-    // }
+      values.insert(new_line_key, new_line);
+      graph.add(gtsam::PriorFactor<gtsam::Point2>(new_line_key,new_line,measurement_noise));
+      // LineFactor factor(next_pose_key, next_pose_key, new_line_key, new_line_narnia.r, new_line_narnia.th, measurement_noise);
+      // graph.add(factor);
+    }
 
     // TODO: get rid of all these debug prints
-    if (num_poses > 2) isam.estimate().at<gtsam::Pose2>(prev_pose_key).print();
-    values.at<gtsam::Pose2>(next_pose_key).print();
+    // if (num_poses > 2) isam.estimate().at<gtsam::Pose2>(prev_pose_key).print();
+    // values.at<gtsam::Pose2>(next_pose_key).print();
     isam.update(graph, values);
-    odometry.print();
-    isam.estimate().at<gtsam::Pose2>(prev_pose_key).print();
-    isam.estimate().at<gtsam::Pose2>(next_pose_key).print();
-    std::cout << std::endl;
+    // odometry.print();
+    // isam.estimate().at<gtsam::Pose2>(prev_pose_key).print();
+    // isam.estimate().at<gtsam::Pose2>(next_pose_key).print();
+    // std::cout << std::endl;
     graph.resize(0);
     values.clear();
   }
@@ -100,6 +101,7 @@ class Solver {
     std::vector<Line> updated_landmarks;
 
     gtsam::Values estimate_values = isam.estimate();
+    // gtsam::Values estimate_vialues = gtsam::LevenbergMarquardtOptimizer(graph, values).optimize();
 
     for (auto k: estimate_values.keys()) {
       // if landmark value
@@ -117,6 +119,8 @@ class Solver {
   }
 
   Pose get_last_pose() {
+    // gtsam::Values estimate_values = gtsam::LevenbergMarquardtOptimizer(graph, values).optimize();
+
     gtsam::Values estimate_values = isam.estimate();
     gtsam::Key pose_key = gtsam::symbol('P',num_poses-1);
     gtsam::Pose2 p = estimate_values.at<gtsam::Pose2>(pose_key);

@@ -79,8 +79,6 @@ while True:
     plt.draw()
     ax.set_xlim((-10, 10))
     ax.set_ylim((-10, 10))
-    if iteration == 280:
-        input()
     plt.pause(0.05)
     # if plt.waitforbuttonpress(0): exit()
     plt.cla()

@@ -9,10 +9,10 @@
 double th_min = 0.0;
 double th_max = 2.0 * M_PI;
 double r_min = 0.0;
-double r_max = 4.0;
+double r_max = 5.0;
 double r_step = .01;
-double th_step = .02;
-int vote_thresh = 60; //120;
+double th_step = .01;
+int vote_thresh = 80; //120;
 
 int main(int argc, char** argv) {
   using namespace std;

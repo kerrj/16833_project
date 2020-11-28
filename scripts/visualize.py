@@ -5,7 +5,7 @@ import time
 
 fig = plt.figure()
 ax = plt.axes()
-logname = "../data/16833_log_pitt_house.txt"
+logname = "../data/16833_log_downstairs.txt"
 plt.axis("equal")
 
 
@@ -79,6 +79,6 @@ while True:
     plt.draw()
     ax.set_xlim((-10, 10))
     ax.set_ylim((-10, 10))
-    plt.pause(0.05)
+    plt.pause(0.01)
     # if plt.waitforbuttonpress(0): exit()
     plt.cla()

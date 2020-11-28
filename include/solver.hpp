@@ -23,7 +23,7 @@ class Solver {
   gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(70);
 
   gtsam::SharedNoiseModel odometry_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(0.02, 0.02, 0.1)); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.02,2), std::pow(0.02,2), std::pow(0.1,2))); // TODO: change covariances
   gtsam::SharedNoiseModel measurement_noise =
     gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(Line::R_VAR, Line::TH_VAR)); // TODO: change covariances
 
@@ -81,18 +81,9 @@ class Solver {
 
       values.insert(new_line_key, new_line);
       graph.add(gtsam::PriorFactor<gtsam::Point2>(new_line_key,new_line,measurement_noise));
-      // LineFactor factor(next_pose_key, next_pose_key, new_line_key, new_line_narnia.r, new_line_narnia.th, measurement_noise);
-      // graph.add(factor);
     }
 
-    // TODO: get rid of all these debug prints
-    // if (num_poses > 2) isam.estimate().at<gtsam::Pose2>(prev_pose_key).print();
-    // values.at<gtsam::Pose2>(next_pose_key).print();
     isam.update(graph, values);
-    // odometry.print();
-    // isam.estimate().at<gtsam::Pose2>(prev_pose_key).print();
-    // isam.estimate().at<gtsam::Pose2>(next_pose_key).print();
-    // std::cout << std::endl;
     graph.resize(0);
     values.clear();
   }

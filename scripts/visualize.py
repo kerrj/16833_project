@@ -7,6 +7,10 @@ fig = plt.figure()
 ax = plt.axes()
 logname = "../data/16833_log_downstairs.txt"
 plt.axis("equal")
+final_sol = True
+#this flag indicates to use the final_output file instead of output
+#The difference is that final_output contains smoothed poses, where output
+# contains pose values during the real-time execution
 
 
 def visualize_line(r, rad_theta, xrange=(-15, 15), yrange=(-15, 15), **kwargs):
@@ -30,7 +34,10 @@ def visualize_scan(pts, frame):
 
 
 logf = open(logname)
-resf = open("output.txt")
+if final_sol:
+    resf = open("final_output.txt")
+else:
+    resf = open("output.txt")
 iteration = 0
 while True:
     iteration += 1
@@ -52,14 +59,15 @@ while True:
     print("# landmarks:", nlandmarks)
 
     # plot detected lines
-    nlines = resf.readline()
-    nlines = int(nlines[nlines.find(":") + 1 :])
-    for i in range(nlines):
-        line = resf.readline()
-        line = line[line.find("r,th=(") + 6 : -2]
-        line = [float(s) for s in line.split(",")]  # r,th
-        visualize_line(line[0], line[1], linewidth=1, alpha=0.4)
-    print("# detected lines:", nlines)
+    if not final_sol:
+        nlines = resf.readline()
+        nlines = int(nlines[nlines.find(":") + 1 :])
+        for i in range(nlines):
+            line = resf.readline()
+            line = line[line.find("r,th=(") + 6 : -2]
+            line = [float(s) for s in line.split(",")]  # r,th
+            visualize_line(line[0], line[1], linewidth=1, alpha=0.4)
+        print("# detected lines:", nlines)
 
     # plot scan
     while True:
@@ -79,6 +87,6 @@ while True:
     plt.draw()
     ax.set_xlim((-10, 10))
     ax.set_ylim((-10, 10))
-    plt.pause(0.01)
+    plt.pause(0.001)
     # if plt.waitforbuttonpress(0): exit()
     plt.cla()

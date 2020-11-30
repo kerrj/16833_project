@@ -26,9 +26,9 @@ class LineDetector {
     vote_thresh = vote_thresh_;
 
     th_range = th_max - th_min;
-    r_range = r_max - r_min;
-    r_step = r_step_;
-    th_step = th_step_;
+    r_range  = r_max - r_min;
+    r_step   = r_step_;
+    th_step  = th_step_;
 
     param_th_range = int(th_range / th_step);
     param_r_range = int(r_range / r_step);
@@ -52,8 +52,8 @@ class LineDetector {
       for (int v = 0; v < param_space[0].size(); ++v) {
         if (param_space[u][v] >= vote_thresh) {
           bool notmax = false;
-          for (int r = -5; r <= 5; r++) {
-            for (int c = -5; c <= 5; c++) {
+          for (int r = -20; r <= 20; r++) {
+            for (int c = -20; c <= 20; c++) {
               int uo = u + r;
               int vo = v + c;
 
@@ -103,7 +103,7 @@ class LineDetector {
     // get max votes
     std::vector<Line> hough_lines = max_votes(p);
     //prune things out with NMS
-    const double reject_dist=.5;
+    const double reject_dist=.2;
     for(int i = hough_lines.size()-1;i >= 0;i--){
       for(int j = i-1;j >= 0;j--){
         double dist = hough_lines[i].distance(hough_lines[j]);

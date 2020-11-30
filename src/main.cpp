@@ -12,7 +12,7 @@ double r_min = 0.0;
 double r_max = 5.0;
 double r_step = .01;
 double th_step = .01;
-int vote_thresh = 80; //120;
+int vote_thresh = 120; //120;
 
 int main(int argc, char** argv) {
   using namespace std;
@@ -46,14 +46,11 @@ int main(int argc, char** argv) {
       shared_ptr<Odometry> odom = static_pointer_cast<Odometry>(r);
       // cout<<"Processing odom at time " << odom->t << endl;
 
-      state.add_odom(odom);//THIS IS CHANGED
-      //it now keeps a queue of odom, and only integrates it when
-      //integrate_odom is called. This is to deal with the fact that
-      //the scan pose is the pose of the end of the last scan. It's
-      //a cleaner way than keeping a last_scan_pose variable around
+      state.add_odom(odom);
 
     } else if (r->type == 'S') {
       // scan reading
+      state.integrate_odom();//changed log files to make this happen up front
       shared_ptr<Scan> scan = static_pointer_cast<Scan>(r);
       cout<<"Processing scan at time " << scan->t << endl;
 
@@ -89,12 +86,23 @@ int main(int argc, char** argv) {
         Project::Line line_in_world = l.convert_coords(origin);
         vis_log << "  " << line_in_world << endl;
       }
-
-      //integrate the remaining odom to take us to the next scan frame
-      //see explanation inside the odom branch above
-      state.integrate_odom();
-      if (scan_count++ >= 300) break;
+      if (scan_count++ >= 100) break;
     }
-  }
+  }  
   vis_log.close();
+  //after all the estimation, print out a final estimate file in the same format
+  //so we can visualize the final estimate
+  std::ofstream final_log;
+  std::vector<Project::Line> final_landmarks = solver.get_landmark_values();
+  final_log.open("./scripts/final_output.txt");
+  for(int i=0;i<solver.get_num_poses();i++){
+    Project::Pose p = solver.get_pose(i);
+    final_log<<p<<std::endl;
+    final_log<<"Landmarks: "<<final_landmarks.size()<<std::endl;
+    for (auto& l : final_landmarks) {
+        Project::Line line_in_world = l.convert_coords(origin);
+        final_log << "  " << line_in_world << std::endl;
+      }
+  }
+  final_log.close();
 }

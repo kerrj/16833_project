@@ -10,7 +10,7 @@ class Line {
 public:
   Pose ref_frame;
   double r, th;
-  constexpr static const double R_VAR = 0.005, TH_VAR = .003;
+  constexpr static const double R_VAR = 0.005, TH_VAR = .005;
 
   Line(Pose _p, double _r, double _th) : ref_frame(_p), r(_r), th(_th){};
 

@@ -20,12 +20,14 @@ namespace Project {
 class Solver {
   gtsam::NonlinearFactorGraph graph;
   gtsam::Values values;
-  gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(70);
+  gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(40);
 
   gtsam::SharedNoiseModel odometry_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.02,2), std::pow(0.02,2), std::pow(0.1,2))); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.003,2), std::pow(0.003,2), std::pow(0.1,2))); // TODO: change covariances
   gtsam::SharedNoiseModel measurement_noise =
     gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(Line::R_VAR, Line::TH_VAR)); // TODO: change covariances
+  
+
 
   int num_poses = 0;
   int num_landmarks = 0;
@@ -34,10 +36,6 @@ class Solver {
 
   public:
   Solver() {
-    // add a pose variable with a prior at (0, 0, 0)
-    gtsam::Key pose_key = gtsam::symbol('P', num_poses++);
-    values.insert(pose_key, gtsam::Pose2());
-    graph.add(gtsam::PriorFactor<gtsam::Pose2>(pose_key, gtsam::Pose2(), odometry_noise));
     prev_pose = gtsam::Pose2();
   }
 
@@ -50,15 +48,21 @@ class Solver {
 
     gtsam::Pose2 new_pose = new_pose_narnia.to_Pose2();
 
-    // add new_pose variable
-    gtsam::Key prev_pose_key = gtsam::symbol('P', num_poses-1);
-    gtsam::Key next_pose_key = gtsam::symbol('P', num_poses++);
-    values.insert(next_pose_key, new_pose);
+    
 
-    // add factor between new and previous pose
-    gtsam::Point2 rel_translation = prev_pose.transformTo(gtsam::Point2(new_pose.x(),new_pose.y()));
-    gtsam::Pose2 odometry(rel_translation.x(), rel_translation.y(), wrapAng(new_pose.theta() - prev_pose.theta()));
-    graph.add(gtsam::BetweenFactor<gtsam::Pose2>(prev_pose_key, next_pose_key, odometry, odometry_noise));
+    // add factor between new and previous pose or add a prior if this
+    //is the first pose
+    gtsam::Key next_pose_key = gtsam::symbol('P', num_poses++);
+    if(num_poses==1){
+      values.insert(next_pose_key, new_pose);
+      graph.add(gtsam::PriorFactor<gtsam::Pose2>(next_pose_key, new_pose, odometry_noise));
+    }else{
+      gtsam::Key prev_pose_key = gtsam::symbol('P', num_poses-1);
+      values.insert(next_pose_key, new_pose);
+      gtsam::Point2 rel_translation = prev_pose.transformTo(gtsam::Point2(new_pose.x(),new_pose.y()));
+      gtsam::Pose2 odometry(rel_translation.x(), rel_translation.y(), wrapAng(new_pose.theta() - prev_pose.theta()));
+      graph.add(gtsam::BetweenFactor<gtsam::Pose2>(prev_pose_key, next_pose_key, odometry, odometry_noise));
+    }
 
     // update prev_pose for the next valid call to update_graph
     prev_pose = new_pose;
@@ -110,13 +114,15 @@ class Solver {
   }
 
   Pose get_last_pose() {
-    // gtsam::Values estimate_values = gtsam::LevenbergMarquardtOptimizer(graph, values).optimize();
-
+    return get_pose(num_poses-1);
+  }
+  Pose get_pose(int pose_id){
     gtsam::Values estimate_values = isam.estimate();
-    gtsam::Key pose_key = gtsam::symbol('P',num_poses-1);
+    gtsam::Key pose_key = gtsam::symbol('P',pose_id);
     gtsam::Pose2 p = estimate_values.at<gtsam::Pose2>(pose_key);
     return Pose2_to_Pose(p);
   }
+  int get_num_poses(){return num_poses;}
 };
 } // namespace Project
 

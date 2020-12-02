@@ -14,7 +14,7 @@ std::pair<std::vector<std::pair<Line, int> >, std::vector<Line> > associate_data
     std::vector<Line> lines, std::vector<Line> landmarks) {
   // TODO: output type will change to void
   // TODO: tune these constants
-  const double MATCH_THRESHOLD = .1;
+  const double MATCH_THRESHOLD = .3;
   const double MAX_DISTANCE = 10000;
   int num_nodes =
       lines.size() > landmarks.size() ? lines.size() : landmarks.size();

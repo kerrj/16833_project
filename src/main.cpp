@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
         Project::Line line_in_world = l.convert_coords(origin);
         vis_log << "  " << line_in_world << endl;
       }
-      if (scan_count++ >= 100) break;
+      if (scan_count++ >= 1000) break;
     }
   }  
   vis_log.close();

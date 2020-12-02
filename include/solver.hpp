@@ -23,7 +23,7 @@ class Solver {
   gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(40);
 
   gtsam::SharedNoiseModel odometry_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.003,2), std::pow(0.003,2), std::pow(0.1,2))); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.003,2), std::pow(0.003,2), std::pow(0.15,2))); // TODO: change covariances
   gtsam::SharedNoiseModel measurement_noise =
     gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(Line::R_VAR, Line::TH_VAR)); // TODO: change covariances
   
@@ -47,9 +47,6 @@ class Solver {
     ) {
 
     gtsam::Pose2 new_pose = new_pose_narnia.to_Pose2();
-
-    
-
     // add factor between new and previous pose or add a prior if this
     //is the first pose
     gtsam::Key next_pose_key = gtsam::symbol('P', num_poses++);
@@ -86,7 +83,6 @@ class Solver {
       values.insert(new_line_key, new_line);
       graph.add(gtsam::PriorFactor<gtsam::Point2>(new_line_key,new_line,measurement_noise));
     }
-
     isam.update(graph, values);
     graph.resize(0);
     values.clear();

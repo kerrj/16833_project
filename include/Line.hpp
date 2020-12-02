@@ -13,6 +13,7 @@ public:
   constexpr static const double R_VAR = 0.005, TH_VAR = .003;
 
   Line(Pose _p, double _r, double _th) : ref_frame(_p), r(_r), th(_th){};
+  Line() : ref_frame(Pose()), r(0), th(0) {}
 
   virtual ~Line() {}
 
@@ -21,6 +22,13 @@ public:
     double r_dist = std::pow(self_prime.r - other.r, 2);
     double th_dist = std::pow(wrapAng(self_prime.th - other.th), 2);
     return std::sqrt(r_dist + th_dist);
+  }
+
+  // distance from this line to a point (x,y) that's also relative to ref_frame
+  double distance_to_point(double x, double y) {
+    double u_x = std::cos(th);
+    double u_y = std::sin(th);
+    return std::abs(u_x*x + u_y*y - r);
   }
 
   /*

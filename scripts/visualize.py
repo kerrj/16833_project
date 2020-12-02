@@ -7,7 +7,7 @@ fig = plt.figure()
 ax = plt.axes()
 logname = "../data/16833_log_downstairs.txt"
 plt.axis("equal")
-final_sol = True
+final_sol = False
 #this flag indicates to use the final_output file instead of output
 #The difference is that final_output contains smoothed poses, where output
 # contains pose values during the real-time execution

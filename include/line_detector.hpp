@@ -80,7 +80,21 @@ class LineDetector {
 
     return hough_lines;
   }
-
+  void downsample_scan(std::shared_ptr<Scan> scan, std::vector<double> &xs, std::vector<double> &ys){
+    xs.push_back(scan->xs[0]);
+    ys.push_back(scan->ys[0]);
+    // Downsample the points to a certain max density
+    const double min_distance = .02;
+    // Iterate through the scan radially, reject
+    for(int i=1;i<scan->xs.size();i++){
+      double lastx = xs[xs.size()-1];
+      double lasty = ys[ys.size()-1];
+      double dist = std::hypot(lastx - scan->xs[i],lasty - scan->ys[i]);
+      if(dist<min_distance)continue;
+      xs.push_back(scan->xs[i]);
+      ys.push_back(scan->ys[i]);
+    }
+  }
   std::vector<Line> detect_lines(std::shared_ptr<Scan> scan, Pose p) {
     // clear param_space
     for (auto& r : param_space) {
@@ -88,9 +102,8 @@ class LineDetector {
     }
     std::vector<double> xs;
     std::vector<double> ys;
-    // Downsample the points to a certain max density
-    const double min_distance = .03;
-    // Iterate through the scan radially, reject
+    downsample_scan(scan,xs,ys);
+    std::cout<<"Original size: "<<scan->xs.size()<<" downsampled size: "<<xs.size()<<std::endl;
     int num_pts = xs.size();
     // populate parameter space with votes
     for (int i = 0; i < num_pts; ++i) {

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <ctime>
 #include "../include/data_association.hpp"
 #include "../include/LogReader.hpp"
 #include "../include/line_detector.hpp"
@@ -35,8 +36,16 @@ int main(int argc, char** argv) {
 
   Project::LineDetector line_detector(th_min, th_max, r_min, r_max, vote_thresh,
                                       r_step, th_step);
+  // Project::LineDetectorP line_detector(th_min, th_max, r_min, r_max, 60, 0.1, r_step, th_step);
 
   Project::Solver solver;
+
+  std::clock_t start;
+  std::clock_t beginning = std::clock();
+  double line_detection_time = 0;
+  double logging_time = 0;
+  double data_association_time = 0;
+  double solver_time = 0;
 
   int scan_count = 0;
   while ((r = logReader.getNext()) !=
@@ -55,21 +64,30 @@ int main(int argc, char** argv) {
       cout<<"Processing scan at time " << scan->t << endl;
 
       // detect lines
+      start = std::clock();
       vector<Project::Line> detected_lines =
         line_detector.detect_lines(scan, state.pose);
+      line_detection_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
       // match lines with landmarks
+      start = std::clock();
       pair<vector<pair<Project::Line, int> >, vector<Project::Line> >
         matches = Project::associate_data(detected_lines, state.landmarks);
+      data_association_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
       // optimize with new lines
+      start = std::clock();
       solver.update(state.pose, matches.first, matches.second);
-      vector<Project::Line> updated_landmarks = solver.get_landmark_values();
+      solver_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
+
       //update the landmark estimates
+      vector<Project::Line> updated_landmarks = solver.get_landmark_values();
       state.set_landmarks(updated_landmarks);
+
       // update the scan pose estimate
       state.pose = solver.get_last_pose();
 
+      start = std::clock();
       // prints the current reference frame of the scan
       vis_log << state.pose << endl;
 
@@ -86,12 +104,15 @@ int main(int argc, char** argv) {
         Project::Line line_in_world = l.convert_coords(origin);
         vis_log << "  " << line_in_world << endl;
       }
-      if (scan_count++ >= 100) break;
+      logging_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
+
+      if (scan_count++ >= 500) break;
     }
   }  
   vis_log.close();
   //after all the estimation, print out a final estimate file in the same format
   //so we can visualize the final estimate
+  start = std::clock();
   std::ofstream final_log;
   std::vector<Project::Line> final_landmarks = solver.get_landmark_values();
   final_log.open("./scripts/final_output.txt");
@@ -105,4 +126,10 @@ int main(int argc, char** argv) {
       }
   }
   final_log.close();
+  logging_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
+  std::cout << "total line detection time: " << line_detection_time << std::endl;
+  std::cout << "total solver time: " << solver_time << std::endl;
+  std::cout << "total visualization logging time: " << logging_time << std::endl;
+  std::cout << "total data association time: " << data_association_time << std::endl;
+  std::cout << "total time: " << (std::clock() - beginning) / (double)CLOCKS_PER_SEC << std::endl;
 }

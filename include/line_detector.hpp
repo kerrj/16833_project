@@ -48,7 +48,7 @@ class LineDetector {
     }
   }
 
-  std::vector<Line> max_votes(Pose p) {
+  std::vector<Line> max_votes(Pose p,std::vector<int> &votes) {
     // vector of 2d vectors
     std::vector<Line> hough_lines;
 
@@ -74,6 +74,7 @@ class LineDetector {
           if (notmax) continue;
           Line new_line(p, ((double)u) * r_step, ((double)v) * th_step);
           hough_lines.push_back(new_line);
+          votes.push_back(param_space[u][v]);
         }
       }
     }
@@ -121,14 +122,16 @@ class LineDetector {
       }
     }
     // get max votes
-    std::vector<Line> hough_lines = max_votes(p);
+    std::vector<int> votes;
+    std::vector<Line> hough_lines = max_votes(p,votes);
     // prune things out with NMS
-    const double reject_dist=.5;
+    const double reject_dist=1;
     for(int i = hough_lines.size()-1;i >= 0;i--){
       for(int j = i-1;j >= 0;j--){
         double dist = hough_lines[i].distance(hough_lines[j]);
-        if(dist<reject_dist){
+        if(dist<reject_dist && votes[i]<=votes[j]){
           hough_lines.erase(hough_lines.begin()+i);
+          votes.erase(votes.begin()+i);
           break;
         }
       }

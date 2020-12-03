@@ -5,7 +5,7 @@ import time
 
 fig = plt.figure()
 ax = plt.axes()
-logname = "../data/16833_log_pitt_house.txt"
+logname = "../data/16833_log_downstairs.txt"
 plt.axis("equal")
 final_sol = False
 #this flag indicates to use the final_output file instead of output

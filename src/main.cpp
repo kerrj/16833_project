@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <ctime>
+#include <chrono>
 #include "../include/data_association.hpp"
 #include "../include/LogReader.hpp"
 #include "../include/line_detector.hpp"
@@ -40,12 +40,12 @@ int main(int argc, char** argv) {
 
   Project::Solver solver;
 
-  std::clock_t start;
-  std::clock_t beginning = std::clock();
-  double line_detection_time = 0;
-  double logging_time = 0;
-  double data_association_time = 0;
-  double solver_time = 0;
+  std::chrono::time_point<std::chrono::high_resolution_clock> start;
+  std::chrono::time_point<std::chrono::high_resolution_clock> beginning = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> line_detection_time;
+  std::chrono::duration<double> logging_time;
+  std::chrono::duration<double> data_association_time;
+  std::chrono::duration<double> solver_time;
 
   int scan_count = 0;
   while ((r = logReader.getNext()) !=
@@ -64,21 +64,21 @@ int main(int argc, char** argv) {
       cout<<"Processing scan at time " << scan->t << endl;
 
       // detect lines
-      start = std::clock();
+      start = std::chrono::high_resolution_clock::now();
       vector<Project::Line> detected_lines =
         line_detector.detect_lines(scan, state.pose);
-      line_detection_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
+      line_detection_time += (std::chrono::high_resolution_clock::now() - start);
 
       // match lines with landmarks
-      start = std::clock();
+      start = std::chrono::high_resolution_clock::now();
       pair<vector<pair<Project::Line, int> >, vector<Project::Line> >
         matches = Project::associate_data(detected_lines, state.landmarks);
-      data_association_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
+      data_association_time += (std::chrono::high_resolution_clock::now() - start);
 
       // optimize with new lines
-      start = std::clock();
+      start = std::chrono::high_resolution_clock::now();
       solver.update(state.pose, matches.first, matches.second);
-      solver_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
+      solver_time += (std::chrono::high_resolution_clock::now() - start);
 
       //update the landmark estimates
       vector<Project::Line> updated_landmarks = solver.get_landmark_values();
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
       // update the scan pose estimate
       state.pose = solver.get_last_pose();
 
-      start = std::clock();
+      start = std::chrono::high_resolution_clock::now();
       // prints the current reference frame of the scan
       vis_log << state.pose << endl;
 
@@ -104,15 +104,15 @@ int main(int argc, char** argv) {
         Project::Line line_in_world = l.convert_coords(origin);
         vis_log << "  " << line_in_world << endl;
       }
-      logging_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
+      logging_time += (std::chrono::high_resolution_clock::now() - start);
 
-      if (scan_count++ >= 500) break;
+      if (scan_count++ >= 1000) break;
     }
   }  
   vis_log.close();
   //after all the estimation, print out a final estimate file in the same format
   //so we can visualize the final estimate
-  start = std::clock();
+  start = std::chrono::high_resolution_clock::now();
   std::ofstream final_log;
   std::vector<Project::Line> final_landmarks = solver.get_landmark_values();
   final_log.open("./scripts/final_output.txt");
@@ -126,10 +126,11 @@ int main(int argc, char** argv) {
       }
   }
   final_log.close();
-  logging_time += (std::clock() - start) / (double)CLOCKS_PER_SEC;
-  std::cout << "total line detection time: " << line_detection_time << std::endl;
-  std::cout << "total solver time: " << solver_time << std::endl;
-  std::cout << "total visualization logging time: " << logging_time << std::endl;
-  std::cout << "total data association time: " << data_association_time << std::endl;
-  std::cout << "total time: " << (std::clock() - beginning) / (double)CLOCKS_PER_SEC << std::endl;
+  logging_time += (std::chrono::high_resolution_clock::now() - start);
+  std::cout << "total line detection time: " << line_detection_time.count() << std::endl;
+  std::cout << "total solver time: " << solver_time.count() << std::endl;
+  std::cout << "total visualization logging time: " << logging_time.count() << std::endl;
+  std::cout << "total data association time: " << data_association_time.count() << std::endl;
+  std::chrono::duration<double> total_time = (std::chrono::high_resolution_clock::now() - beginning);
+  std::cout << "total time: " << total_time.count() << std::endl;
 }

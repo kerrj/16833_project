@@ -1,15 +1,14 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(slam_project)
+cmake_minimum_required(VERSION 3.12.0)
+project(slam_project LANGUAGES CXX)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
-#find_package(Boost REQUIRED)
-#find_package(Boost COMPONENTS filesystem REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(GTSAM REQUIRED)
+find_package(OpenMP REQUIRED)
 
 include_directories(
     include
@@ -26,6 +25,7 @@ target_link_libraries(${PROJECT_NAME}
     ${Boost_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
     gtsam
+    OpenMP::OpenMP_CXX
 )
 
-target_compile_options(slam_project PRIVATE -Wall -Wextra -Wno-reorder -Wno-unused-parameter -Wno-sign-compare )
+target_compile_options(slam_project PRIVATE -Wall -Wextra -Wno-reorder -Wno-unused-parameter -Wno-sign-compare)

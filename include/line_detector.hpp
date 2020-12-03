@@ -40,47 +40,87 @@ class LineDetector {
 
     param_th_range = int(th_range / th_step);
     param_r_range = int(r_range / r_step);
-    // std::cout<<"size of space (th,r): "<<param_th_range<<"
-    // "<<param_r_range<<std::endl;
     for (int i = 0; i < param_r_range; i++) {
       std::vector<int16_t> row(param_th_range, 0);
       param_space.push_back(row);
     }
   }
-
+  //new parallel version
   std::vector<Line> max_votes(Pose p,std::vector<int> &votes) {
-    // vector of 2d vectors
-    std::vector<Line> hough_lines;
-
-    for (int u = 0; u < param_space.size(); ++u) {
-      for (int v = 0; v < param_space[0].size(); ++v) {
-        if (param_space[u][v] >= vote_thresh) {
-          bool notmax = false;
-          for (int r = -5; r <= 5; r++) {
-            for (int c = -5; c <= 5; c++) {
-              int uo = u + r;
-              int vo = v + c;
-
-              if (uo >= 0 && uo < param_space.size() && vo >= 0 &&
-                  vo < param_space[0].size()) {
-                if (param_space[uo][vo] > param_space[u][v]) {
-                  notmax = true;
-                  break;
+      // vector of 2d vectors
+      std::vector<Line> hough_lines;
+      #pragma omp parallel
+      {
+        std::vector<std::pair<Line,int> > lines;
+        #pragma omp for nowait
+        for (int u = 0; u < param_space.size(); ++u) {
+            for (int v = 0; v < param_space[0].size(); ++v) {
+                if (param_space[u][v] >= vote_thresh) {
+                  bool notmax=false;
+                  for (int r = -5; r <= 5; r++) {
+                    for (int c = -5; c <= 5; c++) {
+                        int uo = u + r;
+                        int vo = v + c;
+                        if (uo >= 0 && uo < param_space.size()
+                                && vo >= 0 && vo < param_space[0].size()) {
+                            if (param_space[uo][vo] > param_space[u][v]) {
+                                notmax=true;
+                                break;
+                            }
+                        }
+                    }
+                    if(notmax)break;
                 }
-              }
+                if(notmax)continue;
+                Line new_line(p, ((double)u)*r_step, ((double)v)*th_step);
+                lines.emplace_back(new_line,param_space[u][v]);
+                }
             }
-            if (notmax) break;
+        }
+        #pragma omp critical
+        {
+          for(auto p:lines){
+            hough_lines.push_back(p.first);
+            votes.push_back(p.second);
           }
-          if (notmax) continue;
-          Line new_line(p, ((double)u) * r_step, ((double)v) * th_step);
-          hough_lines.push_back(new_line);
-          votes.push_back(param_space[u][v]);
         }
       }
-    }
-
-    return hough_lines;
+      return hough_lines;
   }
+  // old sequential version
+  // std::vector<Line> max_votes(Pose p,std::vector<int> &votes) {
+  //   // vector of 2d vectors
+  //   std::vector<Line> hough_lines;
+
+  //   for (int u = 0; u < param_space.size(); ++u) {
+  //     for (int v = 0; v < param_space[0].size(); ++v) {
+  //       if (param_space[u][v] >= vote_thresh) {
+  //         bool notmax = false;
+  //         for (int r = -5; r <= 5; r++) {
+  //           for (int c = -5; c <= 5; c++) {
+  //             int uo = u + r;
+  //             int vo = v + c;
+
+  //             if (uo >= 0 && uo < param_space.size() && vo >= 0 &&
+  //                 vo < param_space[0].size()) {
+  //               if (param_space[uo][vo] > param_space[u][v]) {
+  //                 notmax = true;
+  //                 break;
+  //               }
+  //             }
+  //           }
+  //           if (notmax) break;
+  //         }
+  //         if (notmax) continue;
+  //         Line new_line(p, ((double)u) * r_step, ((double)v) * th_step);
+  //         hough_lines.push_back(new_line);
+  //         votes.push_back(param_space[u][v]);
+  //       }
+  //     }
+  //   }
+  //   return hough_lines;
+  // }
+
   void downsample_scan(std::shared_ptr<Scan> scan, std::vector<double> &xs, std::vector<double> &ys){
     xs.push_back(scan->xs[0]);
     ys.push_back(scan->ys[0]);
@@ -98,8 +138,9 @@ class LineDetector {
   }
   std::vector<Line> detect_lines(std::shared_ptr<Scan> scan, Pose p) {
     // clear param_space
-    for (auto& r : param_space) {
-      std::fill(r.begin(), r.end(), 0);
+    #pragma omp parallel for
+    for (int i=0;i<param_space.size();i++) {
+        std::fill(param_space[i].begin(), param_space[i].end(), 0);
     }
     std::vector<double> xs;
     std::vector<double> ys;
@@ -107,6 +148,7 @@ class LineDetector {
     std::cout<<"Original size: "<<scan->xs.size()<<" downsampled size: "<<xs.size()<<std::endl;
     int num_pts = xs.size();
     // populate parameter space with votes
+    #pragma omp parallel for
     for (int i = 0; i < num_pts; ++i) {
       double x = xs[i];
       double y = ys[i];
@@ -118,6 +160,7 @@ class LineDetector {
         }
         int rho_index = (int)(rho / r_step);
         if (rho_index >= param_space.size()) continue;
+        #pragma omp atomic
         param_space[rho_index][th_index] += 1;
       }
     }
@@ -125,7 +168,7 @@ class LineDetector {
     std::vector<int> votes;
     std::vector<Line> hough_lines = max_votes(p,votes);
     // prune things out with NMS
-    const double reject_dist=1;
+    const double reject_dist=1.3;
     for(int i = hough_lines.size()-1;i >= 0;i--){
       for(int j = i-1;j >= 0;j--){
         double dist = hough_lines[i].distance(hough_lines[j]);

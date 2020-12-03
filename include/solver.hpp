@@ -23,9 +23,9 @@ class Solver {
   gtsam::NonlinearISAM isam = gtsam::NonlinearISAM(40);
 
   gtsam::SharedNoiseModel odometry_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.003,2), std::pow(0.003,2), std::pow(0.15,2))); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.003,2), std::pow(0.003,2), std::pow(0.1,2))); // TODO: change covariances
   gtsam::SharedNoiseModel measurement_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(Line::R_VAR, Line::TH_VAR)); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(std::pow(.03,2), std::pow(.03,2))); // r,th
   
 
 

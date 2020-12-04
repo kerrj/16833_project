@@ -13,6 +13,7 @@
 #include <gtsam/linear/NoiseModel.h>
 #include <unordered_map>
 #include "LineFactor.hpp"
+#include <stdexcept>
 #include <iostream>
 
 namespace Project {
@@ -28,11 +29,11 @@ class Solver {
 
 
   gtsam::SharedNoiseModel odometry_noise =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.003,2), std::pow(0.003,2), std::pow(0.15,2))); // TODO: change covariances
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector3(std::pow(0.01,2), std::pow(0.01,2), std::pow(0.15,2))); // TODO: change covariances
   gtsam::SharedNoiseModel meas_noise_lo =
     gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(std::pow(.04,2), std::pow(.04,2))); // r,th
   gtsam::SharedNoiseModel meas_noise_hi =
-    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(std::pow(.5,2), std::pow(.5,2))); // r,th
+    gtsam::noiseModel::Diagonal::Sigmas(gtsam::Vector2(std::pow(1,2), std::pow(1,2))); // r,th
   
 
 
@@ -131,9 +132,12 @@ class Solver {
     values.clear();
   }
 
-  std::vector<Line> get_landmark_values(bool high_confidence=false) {
+  std::vector<Line> get_landmark_values(bool high_confidence=false,bool low_confidence=false) {
     //if high_confidence is true, return only the ones with at least
     // confidence_thresh observations
+    if(high_confidence && low_confidence){
+      throw std::runtime_error("Cannot have both flags true in get_landmark_values\n");
+    }
     std::vector<Line> updated_landmarks;
 
     gtsam::Values estimate_values = isam.estimate();
@@ -142,6 +146,9 @@ class Solver {
       // if landmark value
       if (gtsam::symbolChr(k) == 'L') {
         if(high_confidence && measurement_map[k].size()<confidence_thresh){
+          continue;
+        }
+        if(low_confidence && measurement_map[k].size()>=confidence_thresh){
           continue;
         }
         int opt_land_idx = gtsam::symbolIndex(k);

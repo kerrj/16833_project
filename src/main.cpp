@@ -6,15 +6,17 @@
 #include "../include/line_detector.hpp"
 #include "../include/state.hpp"
 #include "../include/solver.hpp"
-
+#include <algorithm>
 double th_min = 0.0;
 double th_max = 2.0 * M_PI;
 double r_min = 0.0;
 double r_max = 5.0;
 double r_step = .01;
 double th_step = .01;
-int vote_thresh = 30; //120;
-
+int vote_thresh = 30; 
+bool sortbysecond(std::pair<Project::Line, int> a,std::pair<Project::Line, int> b){
+  return a.second<b.second;
+}
 int main(int argc, char** argv) {
   using namespace std;
 
@@ -71,8 +73,47 @@ int main(int argc, char** argv) {
 
       // match lines with landmarks
       start = std::chrono::high_resolution_clock::now();
+      //get the high conf landmarks and low conf landmarks
+      std::vector<Project::Line> high_landmarks = solver.get_landmark_values(true);
+      std::vector<Project::Line> low_landmarks  = solver.get_landmark_values(false,true);
+      //find matches with high conf landmarks
       pair<vector<pair<Project::Line, int> >, vector<Project::Line> >
-        matches = Project::associate_data(detected_lines, state.landmarks);
+                        high_matches = Project::associate_data(detected_lines, high_landmarks);
+      //find matches with low conf landmarks with remaining lines if any
+      pair<vector<pair<Project::Line, int> >, vector<Project::Line> >
+                        low_matches  = Project::associate_data(high_matches.second, low_landmarks);
+      //new lines are ones that weren't matched in either round
+      std::vector<Project::Line> new_lines = low_matches.second;
+      //find the new associations, being careful to preserve index into original landmarks
+      std::vector<pair<Project::Line, int> > new_assocs;
+      //we can essentially merge the high and low associations
+      int high_id=0;
+      int low_id=0;
+      std::vector<pair<Project::Line, int> > &high_assocs=high_matches.first;
+      std::vector<pair<Project::Line, int> > &low_assocs=low_matches.first;
+      //sort both of these by their index
+      std::sort(high_assocs.begin(),high_assocs.end(),sortbysecond);
+      std::sort(low_assocs.begin(),low_assocs.end(),sortbysecond);
+      std::vector<Project::Line> all_landmarks = state.landmarks;
+      for(int i=0;i<all_landmarks.size();i++){
+        Project::Line landmark=all_landmarks[i];
+        bool foundhigh=false;
+        if(high_id<high_assocs.size() && 
+            high_landmarks[high_assocs[high_id].second].distance(landmark)<.002){
+          foundhigh=true;
+          new_assocs.emplace_back(high_assocs[high_id++].first,i);
+        }
+        if(low_id<low_assocs.size() && 
+            low_landmarks[low_assocs[low_id].second].distance(landmark)<.002){
+          if(foundhigh)throw std::runtime_error("matched both high and low to same landmark\n");
+          new_assocs.emplace_back(low_assocs[low_id++].first,i);
+        }
+      }
+      if(new_assocs.size()!=high_assocs.size()+low_assocs.size()){
+        throw std::runtime_error("sizes dont match\\n");
+      }
+      pair<vector<pair<Project::Line, int> >, vector<Project::Line> >
+              matches = make_pair(new_assocs,new_lines);
       data_association_time += (std::chrono::high_resolution_clock::now() - start);
 
       // optimize with new lines
@@ -114,7 +155,7 @@ int main(int argc, char** argv) {
   //so we can visualize the final estimate
   start = std::chrono::high_resolution_clock::now();
   std::ofstream final_log;
-  std::vector<Project::Line> final_landmarks = solver.get_landmark_values();
+  std::vector<Project::Line> final_landmarks = solver.get_landmark_values(true);
   final_log.open("./scripts/final_output.txt");
   for(int i=0;i<solver.get_num_poses();i++){
     Project::Pose p = solver.get_pose(i);

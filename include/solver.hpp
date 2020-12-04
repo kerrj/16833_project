@@ -39,7 +39,7 @@ class Solver {
 
   int num_poses = 0;
   int num_landmarks = 0;
-  int confidence_thresh = 4;
+  int confidence_thresh = 5;
   std::unordered_map<gtsam::Key,std::list<MapEntry> > measurement_map;
   std::map<int, int> landmark_to_ref_pose = std::map<int, int>();
   gtsam::Pose2 prev_pose;

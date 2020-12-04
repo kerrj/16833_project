@@ -14,7 +14,7 @@ final_sol = False
 
 
 def visualize_line(r, rad_theta, xrange=(-15, 15), yrange=(-15, 15), **kwargs):
-    x = np.linspace(xrange[0], xrange[1], 50)
+    x = np.linspace(xrange[0], xrange[1], 1000)
     m = -np.cos(rad_theta) / np.sin(rad_theta)
     b = r / np.sin(rad_theta)
     y = m * x + b
@@ -41,7 +41,7 @@ else:
 iteration = 0
 while True:
     iteration += 1
-    print(f"_____ITERATION_({iteration})_____")
+    # print(f"_____ITERATION_({iteration})_____")
 
     # plot pose
     pose = resf.readline()[5:-2]
@@ -51,12 +51,12 @@ while True:
     # plot landmarks
     nlandmarks = resf.readline()
     nlandmarks = int(nlandmarks[nlandmarks.find(":") + 1 :])
+    print("# landmarks:", nlandmarks)
     for i in range(nlandmarks):
         line = resf.readline()
         line = line[line.find("r,th=(") + 6 : -2]
         line = [float(s) for s in line.split(",")]  # r,th
         visualize_line(line[0], line[1], linewidth=1)
-    print("# landmarks:", nlandmarks)
 
     # plot detected lines
     if not final_sol:
@@ -67,7 +67,7 @@ while True:
             line = line[line.find("r,th=(") + 6 : -2]
             line = [float(s) for s in line.split(",")]  # r,th
             visualize_line(line[0], line[1], linewidth=1, alpha=0.4)
-        print("# detected lines:", nlines)
+        # print("# detected lines:", nlines)
 
     # plot scan
     while True:

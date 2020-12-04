@@ -13,7 +13,7 @@ double r_min = 0.0;
 double r_max = 5.0;
 double r_step = .01;
 double th_step = .01;
-int vote_thresh = 30; 
+int vote_thresh = 32; 
 bool sortbysecond(std::pair<Project::Line, int> a,std::pair<Project::Line, int> b){
   return a.second<b.second;
 }
@@ -114,6 +114,9 @@ int main(int argc, char** argv) {
       }
       pair<vector<pair<Project::Line, int> >, vector<Project::Line> >
               matches = make_pair(new_assocs,new_lines);
+      //below 2 lines is old technique
+      // pair<vector<pair<Project::Line, int> >, vector<Project::Line> >
+      //                   matches = Project::associate_data(detected_lines, state.landmarks);
       data_association_time += (std::chrono::high_resolution_clock::now() - start);
 
       // optimize with new lines
